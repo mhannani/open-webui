@@ -1,20 +1,30 @@
 services:
   ollama:
+    image: ollama/ollama:${OLLAMA_DOCKER_TAG-latest}
+    container_name: ollama
     volumes:
       - ollama:/root/.ollama
-    container_name: ollama
-    pull_policy: always
     tty: true
+    ports:
+      - "11434:11434"
     restart: unless-stopped
-    image: ollama/ollama:${OLLAMA_DOCKER_TAG-latest}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
 
   open-webui:
     build:
       context: .
+      dockerfile: Dockerfile
       args:
         OLLAMA_BASE_URL: '/ollama'
-      dockerfile: Dockerfile
-    image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
     container_name: open-webui
     volumes:
       - open-webui:/app/backend/data
@@ -28,7 +38,8 @@ services:
     extra_hosts:
       - host.docker.internal:host-gateway
     restart: unless-stopped
-
+    env_file:
+      - .env
 volumes:
   ollama: {}
   open-webui: {}
