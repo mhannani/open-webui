@@ -4,6 +4,8 @@ services:
     container_name: ollama
     volumes:
       - ollama:/root/.ollama
+    networks:
+      - internal
     tty: true
     ports:
       - "11434:11434"
@@ -28,6 +30,9 @@ services:
     container_name: open-webui
     volumes:
       - open-webui:/app/backend/data
+    networks:
+      - internal
+      - nginx-proxy
     depends_on:
       - ollama
     ports:
@@ -35,6 +40,9 @@ services:
     environment:
       - 'OLLAMA_BASE_URL=http://ollama:11434'
       - 'WEBUI_SECRET_KEY='
+      - VIRTUAL_HOST=chat.healthcare-manufaktur.de
+      - LETSENCRYPT_HOST=chat.healthcare-manufaktur.de
+      - LETSENCRYPT_EMAIL=mohamed_hannani@yahoo.com
     extra_hosts:
       - host.docker.internal:host-gateway
     restart: unless-stopped
@@ -43,3 +51,9 @@ services:
 volumes:
   ollama: {}
   open-webui: {}
+
+networks:
+  nginx-proxy:
+    external: true
+  internal:
+    driver: bridge
